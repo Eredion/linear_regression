@@ -1,0 +1,3 @@
+Thetha training data:
+t0 = 1.0
+t1 = 1.0
