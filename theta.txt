@@ -1,3 +1,4 @@
 Thetha training data:
-t0 = 1.0
-t1 = 1.0
+t0 = 0.5
+t1 = 0.0
+min = 22899min = 22899max = 240000min = 22899max = 240000
