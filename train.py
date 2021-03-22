@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 
 class colors:
     HEADER = '\033[95m'
@@ -26,7 +27,7 @@ def simple_gradient(x, y, theta):
         J = ((h0 - y) @ X)/len(x)
         return((J))
 
-def fit(x, y, theta, alpha=0.005, max_iter=1500):
+def fit(x, y, theta, alpha=0.005, max_iter=150000):
     if type(theta) != np.ndarray or type(x) != np.ndarray or x.ndim != 1\
             or theta.ndim != 1 or len(theta) != 2 or type(y) != np.ndarray\
             or y.ndim != 1 or len(y) != len(x) or type(alpha) != float or\
@@ -40,18 +41,23 @@ def fit(x, y, theta, alpha=0.005, max_iter=1500):
             new_theta[1] = new_theta[1] - alpha * J[1]
         return(new_theta)
 
-def normalizer(data, file):
+def normalizer(data):
     if type(data) != np.ndarray or data.ndim != 1:
         return None
     else:
         data_max = np.max(data)
         data_min = np.min(data)
-        file.writelines(f"min = {data_min}\n")
-        file.writelines(f"max = {data_max}\n")
-        norm_data = []
         norm_data = (data - data_min) / (data_max - data_min)
         return (np.array(norm_data))
 
+def normalizer(data):
+    if type(data) != np.ndarray or data.ndim != 1:
+        return None
+    else:
+        mean = np.mean(data)
+        desv_est = np.std(data)
+        norm_data = (data - mean) / desv_est
+        return (np.array(norm_data))
 
 def train_model():
     filename = input(f"{colors.OKBLUE}Please, introduce a data file:\n" +
@@ -80,11 +86,20 @@ def train_model():
         print("No theta file, starting training with theta [0.0, 0.0]")
         theta = [0.0, 0.0]
 
-    print(x)
-    norm_x = normalizer(x, theta_file)
-    print(norm_x)
-    new_theta = fit(norm_x, y, np.array(theta))
+    #theta0 = theta0*(max(y)-min(y)) + min(y) + \
+    #        (theta1*min(x)*(min(y)-max(y)))/(max(x)-min(x))
+    #theta1 = theta1*(max(y)-min(y)) / (max(x)-min(x))
+
+    norm_x2 = normalizer(x)
+    norm_y2 = normalizer(y)
+    new_theta = fit(norm_x2, norm_y2, np.array(theta))
     print(new_theta)
+    fig, ax = plt.subplots()
+    ax.plot(x, y, 'o')
+    ax.plot(x, new_theta[1] * x + new_theta[0])
+    ax.set_title("Z-norm")
+    plt.show()
+    
 
 if __name__ == "__main__":
    train_model()
