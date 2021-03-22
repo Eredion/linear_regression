@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
 
 import numpy as np
 import pandas as pd
@@ -50,17 +50,48 @@ def normalizer(data):
         norm_data = (data - data_min) / (data_max - data_min)
         return (np.array(norm_data))
 
-def normalizer(data):
-    if type(data) != np.ndarray or data.ndim != 1:
+def plot_data(x, y, theta, r2_score):
+    label = f"y = {round(theta[0], 2)} + {round(theta[1], 4)}x" +\
+        f"\nR2: {round(r2_score, 10)}"
+    fig, ax = plt.subplots()
+    ax.plot(x, y, 'o')
+    ax.plot(x, theta[1] * x + theta[0], label = label)
+    ax.set_xlabel('Milleage (Km)')
+    ax.set_ylabel('Price ($)')
+    plt.legend(loc='upper right')
+    plt.annotate("r-squared = {:.3f}".format(r2_score), (0, 1))
+    plt.show()
+
+def save_theta(theta, file):
+    file.seek(0)
+    file.write(f"Theta training data:\nT0 = {theta[0]}\nT1 = {theta[1]}")
+    file.close
+
+def r2score(y, y_hat):
+    if type(y_hat) != np.ndarray or type(y) != np.ndarray or y.ndim != 1\
+            or y_hat.ndim != 1 or len(y_hat) != len(y):
         return None
     else:
-        mean = np.mean(data)
-        desv_est = np.std(data)
-        norm_data = (data - mean) / desv_est
-        return (np.array(norm_data))
+        return 1.0 - (np.sum((y_hat - y) ** 2) / np.sum((y - np.mean(y)) ** 2))
+
+def get_theta():
+    theta = []
+    try:
+        theta_file = open('theta.txt', 'r')
+        lines = theta_file.readlines()
+        for i in range(1, 3):
+            words = lines[i].split()
+            theta.append(float(words[2]))
+        print(f"{colors.OKBLUE}Theta file found, using theta"
+         + f" = {theta}{colors.ENDC}")
+        theta_file.close
+    except:
+        print("No theta file, using theta = [0.0, 0.0]")
+        theta = [0.0, 0.0]
+    return(theta)
 
 def train_model():
-    filename = input(f"{colors.OKBLUE}Please, introduce a data file:\n" +
+    filename = input(f"{colors.OKBLUE}Please, introduce a data file:\n" +\
         colors.ENDC)
     if not filename:
         filename = 'data.csv'
@@ -73,33 +104,17 @@ def train_model():
     except:
         print(colors.WARNING + "Invalid data file")
         return
-    theta = []
-    try:
-        theta_file = open('theta.txt', 'r+')
-        lines = theta_file.readlines()
-        for i in range(1, 3):
-            words = lines[i].split()
-            theta.append(float(words[2]))
-        print(f"{colors.OKBLUE}Theta file found, starting training with thetha"
-         + f" = {theta}{colors.ENDC}")
-    except:
-        print("No theta file, starting training with theta [0.0, 0.0]")
-        theta = [0.0, 0.0]
+    theta = get_theta()
+    theta_file = open('theta.txt', 'w+')
+    new_theta = fit(normalizer(x), normalizer(y), np.array(theta))
+    new_theta[0] = new_theta[0]*(max(y)-min(y)) + min(y) + \
+            (new_theta[1]*min(x)*(min(y)-max(y)))/(max(x)-min(x))
+    new_theta[1] = new_theta[1]*(max(y)-min(y)) / (max(x)-min(x))
+    r2_score = r2score(y, np.concatenate(((np.ones((len(x), 1))),
+            x.reshape(len(x), 1)), axis=1) @ new_theta )
+    plot_data(x, y, new_theta, r2_score)
+    save_theta(new_theta, theta_file)
 
-    #theta0 = theta0*(max(y)-min(y)) + min(y) + \
-    #        (theta1*min(x)*(min(y)-max(y)))/(max(x)-min(x))
-    #theta1 = theta1*(max(y)-min(y)) / (max(x)-min(x))
-
-    norm_x2 = normalizer(x)
-    norm_y2 = normalizer(y)
-    new_theta = fit(norm_x2, norm_y2, np.array(theta))
-    print(new_theta)
-    fig, ax = plt.subplots()
-    ax.plot(x, y, 'o')
-    ax.plot(x, new_theta[1] * x + new_theta[0])
-    ax.set_title("Z-norm")
-    plt.show()
-    
 
 if __name__ == "__main__":
    train_model()
