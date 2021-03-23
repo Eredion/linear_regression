@@ -3,10 +3,6 @@ from train import get_theta
 
 if __name__ == "__main__":
     theta = get_theta()
-    if theta == [0, 0]:
-        print('\033[93m' + "Model not trained, run ./train first.")
-        exit()
-
     n = input("\033[94mPlease, introduce a mileage in Km:\n" + '\033[0m')
     try:
         n = float(n)
